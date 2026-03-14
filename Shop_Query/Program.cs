@@ -1,7 +1,4 @@
-<<<<<<< Updated upstream
-﻿Console.WriteLine("Hello, World!");
-=======
-﻿
+
 using Shop_Query.Data;
 using Shop_Query.Data.Models;
 
@@ -101,4 +98,4 @@ public class Program
         Console.WriteLine(containsProduct);
     }
 }
->>>>>>> Stashed changes
+
