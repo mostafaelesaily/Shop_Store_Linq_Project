@@ -58,6 +58,10 @@ namespace Shop_Query.Data
                 .IsRequired();
             modelBuilder.Entity<Order>().Property(o => o.CustomerId)
                 .IsRequired();
+            modelBuilder.Entity<Order>().Property
+                (s => s.Status).HasConversion<string>();
+            modelBuilder.Entity<Order>().Property(p => p.PaymentMethod)
+                .HasConversion<string>();
             // Order Config End .
 
             // OrderItems Config Start :

@@ -6,6 +6,6 @@ namespace Shop_Query
 {
     public class Connection
     {
-        public static string ConnectionString = "Server=localhost\\SQLEXPRESS;Database=Bank_Db;Trusted_Connection=True;TrustServerCertificate=True;";
+        public static string ConnectionString = "Server=localhost\\SQLEXPRESS;Database=Shop_Query_Db;Trusted_Connection=True;TrustServerCertificate=True;";
     }
 }
