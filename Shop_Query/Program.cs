@@ -7,34 +7,99 @@ public class Program
     public static void Main(string[] args)
     {
         var db = new AppDbContext();
-        // Query 1: Get all products
+
+
+        // Get all products
         var products = db.Products.ToList();
+
         foreach (var product in products)
         {
-            Console.WriteLine($"name is {product.Name} And price is {product.Description}");
+            Console.WriteLine($"Product: {product.Name} Price: {product.Price}");
         }
-        // Query 2: using where
-        var product1 = db.Products.Where(x => x.Id == 1).FirstOrDefault();
-        Console.WriteLine(product1);
-        // Query 3: using orderby 
+
+
+
+        // Where + FirstOrDefault
+        var product1 = db.Products
+            .Where(x => x.Id == 1)
+            .FirstOrDefault();
+
+        Console.WriteLine($"Product Found: {product1?.Name}");
+
+
+
+        // OrderBy
         var orderitems = db.Orders
-                    .Where(x => x.PaymentMethod == PaymentMethod.BankTransfer)
-                    .OrderBy(x => x.OrderDate)
-                    .ToList();
+            .Where(x => x.PaymentMethod == PaymentMethod.BankTransfer)
+            .OrderBy(x => x.OrderDate)
+            .ToList();
+
         foreach (var orderitem in orderitems)
         {
-            Console.WriteLine($"PaymentMethod is {orderitem.PaymentMethod} And Date : " +
-                $" {orderitem.OrderDate} ");
+            Console.WriteLine($"Payment: {orderitem.PaymentMethod} Date: {orderitem.OrderDate}");
         }
-        // Query 4 : using thenby
-        var orderitems2 = db.Orders.Where(x => x.Status == OrderStatus.Pending)
+
+
+
+        // OrderBy + ThenBy
+        var orderitems2 = db.Orders
+            .Where(x => x.Status == OrderStatus.Pending)
             .OrderBy(x => x.OrderDate)
-            .ThenBy(x => x.CustomerId);
+            .ThenBy(x => x.CustomerId)
+            .ToList();
+
         foreach (var orderitem in orderitems2)
         {
-            Console.WriteLine($"Status is {orderitem.Status} And Date {orderitem.OrderDate}");
+            Console.WriteLine($"Status: {orderitem.Status} Date: {orderitem.OrderDate}");
         }
-        // Query 5 :  using join ( Order - Customer )
+
+
+
+        // Any
+        var anyProduct = db.Products.Any(p => p.Price > 100);
+
+        Console.WriteLine($"Any product price > 100 : {anyProduct}");
+
+
+
+        // All
+        var allProducts = db.Products.All(p => p.Price > 100);
+
+        Console.WriteLine($"All products price > 100 : {allProducts}");
+
+        // Skip And Take 
+
+        var SkipAndTakeResult =
+            db.Products.Skip(10).Take(10)
+            .ToList();
+
+        foreach(var product in SkipAndTakeResult)
+        {
+            Console.WriteLine($"Product Name is {product.Name} And price {product.Price}");
+        }
+
+
+        // Distinct
+        var distinctProducts = db.Products
+            .Select(p => p.Name)
+            .Distinct()
+            .ToList();
+
+        foreach (var productName in distinctProducts)
+        {
+            Console.WriteLine($"Product Name: {productName}");
+        }
+
+
+
+        // Aggregate (Sum)
+        var totalPrice = db.Products.Sum(p => p.Price);
+
+        Console.WriteLine($"Total Price of all products: {totalPrice}");
+
+
+
+        // Join (Orders + Customers)
         var orderwithcus =
             db.Orders
             .Join
@@ -44,58 +109,109 @@ public class Program
                 cus => cus.Id,
                 (order, cus) => new
                 {
-                    order_id = order.Id,
-                    cus_id = cus.Id,
-                    status = order.Status,
-                    date = order.OrderDate
+                    OrderId = order.Id,
+                    CustomerId = cus.Id,
+                    Status = order.Status,
+                    Date = order.OrderDate
                 }
             ).ToList();
+
         foreach (var o in orderwithcus)
         {
-            Console.WriteLine($"OrderId : {o.order_id} ," +
-                $" Cus id : {o.cus_id} , status :{o.status} And date {o.date} "
-
-                );
+            Console.WriteLine($"OrderId: {o.OrderId} CustomerId: {o.CustomerId} Status: {o.Status} Date: {o.Date}");
         }
-        // Query 6 :  using join more than 2 Tables 
 
-        var orderDetails = db.Orders.Join
-             (
-              db.OrderItems,
-              o => o.Id,
-              oi => oi.OrderId,
-              (o, oi) => new { o, oi }
-             ).Join
-             (
-              db.Products,
-              pi => pi.oi.ProductId,
-              p => p.Id,
-              (pi, p) => new
-              {
-                  orderid = pi.oi.OrderId,
-                  Custid = pi.o.CustomerId,
-                  orderdate = pi.o.OrderDate,
-                  orderstatus = pi.o.Status
-              }
-             ).ToList();
+
+
+        // Join more than two tables
+        var orderDetails =
+            db.Orders
+            .Join
+            (
+                db.OrderItems,
+                o => o.Id,
+                oi => oi.OrderId,
+                (o, oi) => new { o, oi }
+            )
+            .Join
+            (
+                db.Products,
+                x => x.oi.ProductId,
+                p => p.Id,
+                (x, p) => new
+                {
+                    OrderId = x.o.Id,
+                    CustomerId = x.o.CustomerId,
+                    ProductName = p.Name,
+                    OrderDate = x.o.OrderDate,
+                    Status = x.o.Status
+                }
+            ).ToList();
+
         foreach (var o in orderDetails)
         {
-            Console.WriteLine($"OrderId : {o.orderid} ," +
-                $" Cus id : {o.Custid} , status :{o.orderstatus} And date {o.orderdate} "
-
-                );
+            Console.WriteLine($"OrderId: {o.OrderId} Product: {o.ProductName} Status: {o.Status} Date: {o.OrderDate}");
         }
-        // Query 7 : using All :  
-        var allProducts = db.Products.All(p => p.Price > 100);
-        Console.WriteLine(allProducts);
 
-        // Query 8 : using Any :
-        var anyProduct = db.Products.Any(p => p.Price > 100);
-        Console.WriteLine(anyProduct);
 
-        // Query 9 : using Containes : 
-        var containsProduct = db.Products.Contains(new Product { Id = 1 , Name = "Laptop" });
-        Console.WriteLine(containsProduct);
+
+        // Join + GroupBy + Average
+        var avgOrdersPerProduct =
+            db.Products
+            .Join
+            (
+                db.OrderItems,
+                p => p.Id,
+                oi => oi.ProductId,
+                (p, oi) => new { p, oi }
+            )
+            .GroupBy(x => new { x.p.Id, x.p.Name })
+            .Select(g => new
+            {
+                ProductId = g.Key.Id,
+                ProductName = g.Key.Name,
+                AvgQuantity = g.Average(x => x.oi.Quantity)
+            }).ToList();
+
+        foreach (var product in avgOrdersPerProduct)
+        {
+            Console.WriteLine($"Product: {product.ProductName} Avg Quantity: {product.AvgQuantity}");
+        }
+
+
+
+        // Join + Join + GroupBy + Aggregation
+        var result =
+            db.Products
+            .Join
+            (
+                db.Categories,
+                p => p.CategoryId,
+                c => c.Id,
+                (p, c) => new { p, c }
+            )
+            .Join
+            (
+                db.OrderItems,
+                pc => pc.p.Id,
+                oi => oi.ProductId,
+                (pc, oi) => new { pc, oi }
+            )
+            .GroupBy(x => new { x.pc.p.Id, x.pc.p.Name })
+            .Select(g => new
+            {
+                ProductId = g.Key.Id,
+                ProductName = g.Key.Name,
+                OrdersCount = g.Count(),
+                TotalQuantity = g.Sum(x => x.oi.Quantity)
+            })
+            .ToList();
+
+        foreach (var item in result)
+        {
+            Console.WriteLine($"Product: {item.ProductName} Orders: {item.OrdersCount} Quantity: {item.TotalQuantity}");
+        }
+
     }
 }
 
