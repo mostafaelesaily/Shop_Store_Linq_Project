@@ -159,6 +159,7 @@ public class Program
         var avgOrdersPerProduct =
             db.Products
             .Join
+
             (
                 db.OrderItems,
                 p => p.Id,
